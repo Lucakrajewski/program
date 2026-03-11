@@ -143,3 +143,56 @@ event_reminders (
 - [ ] Teilnehmerliste + CSV-Export funktioniert
 - [ ] Scheduled publish funktioniert
 - [ ] RLS-Policies korrekt
+
+---
+
+## Tech Design (Solution Architect)
+
+> Vollständige Systemarchitektur: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)
+
+### Wo lebt dieser Code?
+```
+apps/mobile/
+  app/(tabs)/home/
+    index.tsx                    News-Feed (Start-Tab)
+    [id].tsx                     News-Beitrag Detail
+  app/(tabs)/events/
+    index.tsx                    Kalender + Listenansicht
+    [id].tsx                     Event-Detail + Anmeldung
+
+apps/web/
+  app/(dashboard)/news/
+    page.tsx                     News-Übersicht (Tabelle)
+    new/page.tsx                 Rich-Text-Editor
+    [id]/edit/page.tsx           Bearbeiten
+  app/(dashboard)/events/
+    page.tsx                     Event-Übersicht
+    [id]/attendees/page.tsx      Teilnehmerliste
+
+packages/shared/
+  types/news.ts                  NewsPost-Typ
+  types/event.ts                 Event + EventRegistration-Typ
+
+supabase/functions/
+  send-reminder/                 Scheduler: täglich prüfen, Push 24h vor Event
+  send-confirmation-email/       Ausgelöst bei event_registrations INSERT
+```
+
+### Scheduled-Publish-Mechanismus
+```
+Redakteur setzt published_at = "2026-04-01 09:00"
+→ Supabase Edge Function läuft stündlich (Cron)
+→ Prüft: published_at <= jetzt AND is_published = false
+→ Setzt is_published = true
+→ App zeigt Beitrag sofort
+```
+
+### Kalender-Darstellung (Mobile)
+- Listenansicht: Standard (einfachste Implementierung für MVP)
+- Monatsansicht: `react-native-calendars` (leichtgewichtig)
+- Filter: Kategorie-Chips über der Liste
+
+### Abhängigkeiten (neue Pakete)
+- `@tiptap/react` — Rich-Text-Editor (Admin-Portal, bereits evaluiert)
+- `react-native-calendars` — Kalender-Komponente (Mobile)
+- `date-fns` — Datumsformatierung mit deutscher Locale

@@ -124,3 +124,61 @@ chat_bot_rules (
 - [ ] Bot-Regelwerk im Admin-Portal konfigurierbar
 - [ ] Push-Benachrichtigungen bei neuer Nachricht getestet
 - [ ] Anhang-Upload und -Download funktionieren
+
+---
+
+## Tech Design (Solution Architect)
+
+> Vollständige Systemarchitektur: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)
+
+### Wo lebt dieser Code?
+```
+apps/mobile/
+  app/(tabs)/rathaus/
+    index.tsx                    Thread-Liste
+    new.tsx                      Neuer Thread
+    [id].tsx                     Chat-Verlauf + Eingabe (Realtime)
+
+apps/web/
+  app/(dashboard)/chat/
+    page.tsx                     Thread-Liste (alle Gemeinde-Anfragen)
+    [id]/page.tsx                Antworten + interne Notiz + Status
+  app/(dashboard)/chat/bot-rules/
+    page.tsx                     Bot-Regelwerk CRUD
+
+packages/shared/
+  types/chat.ts                  ChatThread, ChatMessage, ChatBotRule
+
+supabase/functions/
+  bot-matcher/                   Ausgelöst bei chat_threads INSERT
+                                 → Keywords prüfen → ggf. Auto-Antwort einfügen
+```
+
+### Echtzeit-Architektur (Live-Chat)
+```
+Nutzer sendet Nachricht
+  → INSERT in chat_messages (Supabase)
+  → Supabase Realtime sendet Event an alle Abonnenten des Threads
+  → Mobile App + Admin-Portal aktualisieren UI sofort (kein Reload)
+  → Edge Function: Push-Benachrichtigung an andere Partei
+```
+
+### Bot-Matching (Regelbasiert, kein KI)
+```
+Neuer Thread erstellt (Betreff: "Öffnungszeiten Bürgerbüro")
+  → Edge Function prüft chat_bot_rules für diese municipality_id
+  → Regel gefunden: keywords = ["öffnungszeiten", "bürgerbüro"]
+  → Bot-Nachricht wird eingefügt (sender_type = 'bot')
+  → Bürger sieht: "Automatische Antwort: Das Bürgerbüro ist..."
+  → Thread bleibt offen für Staff-Antwort
+```
+
+### Interne Notizen — Sicherheit
+- `is_internal = true` in `chat_messages`
+- RLS-Policy: Bürger sieht NUR Nachrichten wo `is_internal = false`
+- Verifiziert durch Row-Level-Security, nicht nur Frontend-Logik
+
+### Abhängigkeiten (neue Pakete)
+- `@supabase/realtime-js` — Live-Updates (Teil von `@supabase/supabase-js`)
+- `expo-document-picker` — PDF-Anhänge auswählen (Mobile)
+- `expo-file-system` — Anhänge herunterladen

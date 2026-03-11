@@ -105,3 +105,45 @@ citizen_profiles (
 - [ ] E2E-Test: Kompletter Onboarding-Flow durchlaufen
 - [ ] DSGVO-Checkbox funktioniert + wird gespeichert
 - [ ] Apple Sign-In auf echtem iOS-Gerät getestet
+
+---
+
+## Tech Design (Solution Architect)
+
+> Vollständige Systemarchitektur: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)
+
+### Wo lebt dieser Code?
+```
+apps/mobile/                     ← Alle Onboarding-Screens
+  app/(onboarding)/
+    index.tsx                    OnboardingWelcome
+    gemeinde-auswahl.tsx         Suche + Liste
+    registrierung.tsx            OAuth-Auswahl
+    email-registrierung.tsx      E-Mail + Passwort Formular
+    email-verifizierung.tsx      Bestätigungs-Hinweis
+    buergerprofil.tsx            Profilformular
+
+packages/shared/
+  types/citizen.ts               CitizenProfile-Typ (geteilt mit Admin-Portal)
+  validators/profile.ts          Zod-Schema für Profil-Validierung
+
+packages/api-client/
+  municipalities.ts              Gemeinde-Suche + Abruf
+  auth.ts                        Login, Registrierung, OAuth
+  citizen-profiles.ts            Profil anlegen + lesen
+```
+
+### Datenspeicherung
+- **Auth-Token:** Expo SecureStore (verschlüsselt auf Gerät)
+- **Gewählte Gemeinde:** Expo SecureStore + Supabase Auth user metadata
+- **Bürgerprofil:** Supabase PostgreSQL (Tabelle `citizen_profiles`, RLS aktiv)
+
+### Sicherheit
+- Apple Sign-In: Pflicht für App Store (Apple-Richtlinie bei Social-Login)
+- Profildaten: nur eigene Zeile lesbar + schreibbar (RLS)
+- DSGVO-Zustimmung: Zeitstempel + Version der Datenschutzerklärung gespeichert
+
+### Abhängigkeiten (neue Pakete)
+- `expo-secure-store` — sichere Token-Speicherung
+- `expo-auth-session` — Google + Apple OAuth
+- `@react-native-community/datetimepicker` — Geburtsdatum-Auswahl

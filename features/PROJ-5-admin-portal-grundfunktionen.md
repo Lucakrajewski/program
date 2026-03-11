@@ -143,3 +143,67 @@ audit_logs (
 - [ ] Feature-Flags sofort in Bürger-App wirksam
 - [ ] Audit-Log wird für alle kritischen Aktionen befüllt
 - [ ] Branding-Änderungen in Echtzeit sichtbar
+
+---
+
+## Tech Design (Solution Architect)
+
+> Vollständige Systemarchitektur: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)
+
+### Wo lebt dieser Code?
+```
+apps/web/                        ← Dieses Repo (bereits als Next.js aufgesetzt)
+  app/
+    (auth)/
+      login/page.tsx             Login-Seite
+    (dashboard)/                 Alle geschützten Seiten
+      page.tsx                   Dashboard / KPI-Übersicht
+      settings/
+        branding/page.tsx        Logo + Farben
+        features/page.tsx        Feature-Flag-Toggles
+        team/page.tsx            Mitarbeiterverwaltung
+        audit/page.tsx           Audit-Log
+
+  middleware.ts                  Auth-Check: leitet nicht-eingeloggte Nutzer zu /login
+
+packages/shared/
+  types/municipality.ts          Municipality, MunicipalitySettings
+  types/staff.ts                 MunicipalityStaff, StaffRole
+  constants/feature-keys.ts      Alle Feature-Flag-Keys (einmal definiert)
+```
+
+### Rollenbasierte Sichtbarkeit (Middleware)
+```
+Request kommt an /dashboard/settings/features
+  → Middleware prüft: ist Nutzer eingeloggt? (Supabase Session)
+  → Supabase prüft: hat Nutzer Rolle 'admin'?
+  → Nein → 403 Forbidden
+  → Ja → Seite wird gerendert
+```
+
+### Feature-Flag-Abruf in der Bürger-App
+```
+App-Start
+  → Lädt feature_flags für eigene municipality_id (gecacht, 5 Min.)
+  → Rendert nur aktive Module in der Tab-Navigation
+  → Kein App-Update nötig wenn Admin Toggle ändert
+```
+
+### Branding-Anwendung in der Bürger-App
+```
+App-Start
+  → Lädt municipality_settings (primary_color, logo_url)
+  → Setzt React Native Theme-Provider
+  → Alle Buttons, Header etc. in Gemeinde-Farbe
+```
+
+### Audit-Log-Strategie
+- Jede kritische Server-Aktion schreibt eine Zeile in `audit_logs`
+- Implementiert als Supabase Edge Function (zentral, nicht im Frontend)
+- Unveränderlich: keine UPDATE/DELETE-Policy auf `audit_logs`
+
+### Abhängigkeiten (neue Pakete für Web)
+- `@tiptap/react` — Rich-Text-Editor (News/Events)
+- `recharts` — KPI-Diagramme im Dashboard
+- `date-fns` — Datumsformatierung (de-DE Locale)
+- `papaparse` — CSV-Export (Mängel, Teilnehmer)

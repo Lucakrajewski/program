@@ -119,3 +119,58 @@ issue_status_history (
 - [ ] Push-Benachrichtigung bei Statusänderung funktioniert
 - [ ] RLS-Policies korrekt (kein Cross-Tenant-Zugriff)
 - [ ] Admin-Portal: Statusänderung + CSV-Export funktioniert
+
+---
+
+## Tech Design (Solution Architect)
+
+> Vollständige Systemarchitektur: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)
+
+### Wo lebt dieser Code?
+```
+apps/mobile/
+  app/(tabs)/melden/
+    index.tsx                    MaengelListe (Karte + Liste)
+    erstellen.tsx                Stepper: Foto → Karte → Formular
+    [id].tsx                     MangelmeldungDetail
+
+apps/web/
+  app/(dashboard)/issues/
+    page.tsx                     MaengelListe Admin (Tabelle)
+    [id]/page.tsx                Detail + Statusänderung
+
+packages/shared/
+  types/issue.ts                 IssueReport, IssueStatus (Mobile + Web)
+  constants/issue-categories.ts  Kategorien (einmal definiert)
+
+packages/api-client/
+  issues.ts                      Erstellen, Lesen, Status-Update, CSV
+
+supabase/functions/
+  send-push-notification/        Ausgelöst bei Statusänderung in issue_reports
+```
+
+### Karten-Strategie
+- iOS: Apple Maps (kostenlos, kein API-Key nötig)
+- Android: Google Maps (kostenloser Kontingent für MVP ausreichend)
+- Reverse Geocoding: Google Maps API oder Nominatim (OpenStreetMap, kostenlos)
+
+### Foto-Upload-Flow
+```
+Nutzer wählt Foto
+  → Komprimierung auf Gerät (max. 1 MB pro Foto, Qualität 80%)
+  → Upload zu Supabase Storage (Bucket: issue-photos)
+  → URL wird in issue_reports.photo_urls gespeichert
+```
+
+### Push-Benachrichtigung bei Statusänderung
+- Supabase Edge Function reagiert auf DB-Trigger in `issue_status_history`
+- Sendet Push via Expo Push API an den meldenden Bürger
+- Falls Push-Token abgelaufen: Fehler wird geloggt, kein Absturz
+
+### Abhängigkeiten (neue Pakete)
+- `react-native-maps` — Kartenanzeige + Pin-Interaktion
+- `expo-location` — GPS-Koordinaten
+- `expo-camera` + `expo-image-picker` — Foto aufnehmen / auswählen
+- `expo-notifications` — Push-Empfang
+- `expo-image-manipulator` — Bild-Komprimierung vor Upload

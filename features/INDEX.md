@@ -12,11 +12,11 @@
 
 | ID | Feature | Status | Spec | Created |
 |----|---------|--------|------|---------|
-| PROJ-1 | Onboarding & Gemeinde-Auswahl | Planned | [PROJ-1-onboarding-gemeinde-auswahl.md](PROJ-1-onboarding-gemeinde-auswahl.md) | 2026-03-11 |
-| PROJ-2 | Mängelmelder | Planned | [PROJ-2-maengelmelder.md](PROJ-2-maengelmelder.md) | 2026-03-11 |
-| PROJ-3 | News & Events | Planned | [PROJ-3-news-events.md](PROJ-3-news-events.md) | 2026-03-11 |
-| PROJ-4 | Rathaus-Chat | Planned | [PROJ-4-rathaus-chat.md](PROJ-4-rathaus-chat.md) | 2026-03-11 |
-| PROJ-5 | Admin-Portal Grundfunktionen | Planned | [PROJ-5-admin-portal-grundfunktionen.md](PROJ-5-admin-portal-grundfunktionen.md) | 2026-03-11 |
+| PROJ-1 | Onboarding & Gemeinde-Auswahl | In Progress | [PROJ-1-onboarding-gemeinde-auswahl.md](PROJ-1-onboarding-gemeinde-auswahl.md) | 2026-03-11 |
+| PROJ-2 | Mängelmelder | In Progress | [PROJ-2-maengelmelder.md](PROJ-2-maengelmelder.md) | 2026-03-11 |
+| PROJ-3 | News & Events | In Progress | [PROJ-3-news-events.md](PROJ-3-news-events.md) | 2026-03-11 |
+| PROJ-4 | Rathaus-Chat | In Progress | [PROJ-4-rathaus-chat.md](PROJ-4-rathaus-chat.md) | 2026-03-11 |
+| PROJ-5 | Admin-Portal Grundfunktionen | In Progress | [PROJ-5-admin-portal-grundfunktionen.md](PROJ-5-admin-portal-grundfunktionen.md) | 2026-03-11 |
 
 <!-- Add features above this line -->
 
